@@ -36,7 +36,7 @@
       <artifactId>exec-maven-plugin</artifactId>
       <version>3.5.0</version>
       <configuration>
-        <mainClass>com.shagai.App</mainClass>
+        <mainClass>com.shagai.FlashcardApp</mainClass>
       </configuration>
     </plugin>
   </plugins>

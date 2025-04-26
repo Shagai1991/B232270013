@@ -1,3 +1,4 @@
-What is the capital of Mongolia?::Ulaanbaatar
+capital of Mongolia?::Ulaanbaatar
 2 + 2::4
-Java was created by?::James Gosling
+Java was created by?::James
+1 + 1::2

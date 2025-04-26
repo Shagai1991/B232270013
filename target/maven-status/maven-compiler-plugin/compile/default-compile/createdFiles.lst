@@ -3,5 +3,6 @@ com\shagai\CardOrganizer.class
 com\shagai\App.class
 com\shagai\Flashcard.class
 com\shagai\AchievementTracker.class
+com\shagai\WorstFirstSorter.class
 com\shagai\CardStats.class
 com\shagai\FlashcardOptions.class

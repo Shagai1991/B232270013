@@ -24,10 +24,10 @@ public class AchievementTracker {
             }
         }
 
-        System.out.println("\n🏅 Achievements Unlocked:");
-        if (allCorrect) System.out.println("✅ CORRECT - All cards answered correctly!");
-        if (repeated)   System.out.println("🔁 REPEAT - A card was asked 5+ times.");
-        if (confident)  System.out.println("💪 CONFIDENT - A card was answered correctly 3+ times.");
+        System.out.println("\n Achievements Unlocked:");
+        if (allCorrect) System.out.println("CORRECT - All cards answered correctly!");
+        if (repeated)   System.out.println("REPEAT - A card was asked 5+ times.");
+        if (confident)  System.out.println("CONFIDENT - A card was answered correctly 3+ times.");
         if (!allCorrect && !repeated && !confident)
             System.out.println("None unlocked this time. Keep practicing!");
     }

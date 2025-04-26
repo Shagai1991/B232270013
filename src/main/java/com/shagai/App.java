@@ -12,7 +12,6 @@ public class App {
             return;
         }
 
-       
         if (args.length == 1 && args[0].equals("--help")) {
             printHelp();
             return;
@@ -26,7 +25,6 @@ public class App {
             return;
         }
 
-     
         while (i < args.length) {
             switch (args[i]) {
                 case "--help":
@@ -38,7 +36,7 @@ public class App {
                 case "--order":
                     if (i + 1 < args.length) {
                         options.order = args[++i];
-                        if (!options.order.matches("random|recent-mistakes-first")) {
+                        if (!options.order.matches("random|recent-mistakes-first|worst-first")) {
                             System.out.println("Invalid order value.");
                             return;
                         }
@@ -56,7 +54,6 @@ public class App {
                             return;
                         }
                     } else {
-                        
                         options.repetitions = 1;
                     }
                     break;
@@ -78,68 +75,103 @@ public class App {
             return;
         }
 
-        // Stats tracker
         Map<Flashcard, CardStats> stats = new HashMap<>();
         for (Flashcard card : cards) {
             stats.put(card, new CardStats());
         }
 
-        // Card ordering
-        if (options.order != null) {
-            if (options.order.equals("random")) {
-                Collections.shuffle(cards);
-            } else if (options.order.equals("recent-mistakes-first")) {
-                CardOrganizer organizer = new RecentMistakesFirstSorter();
-                cards = organizer.organize(cards, stats);
-            }
-        }
-
         Scanner scanner = new Scanner(System.in);
-        int cardIndex = 0;
-        List<Flashcard> remaining = new ArrayList<>(cards);
+        boolean reviewAgain = true;
 
-        while (!remaining.isEmpty()) {
-            Flashcard card = remaining.get(cardIndex % remaining.size());
+        while (reviewAgain) {
+            // Order the flashcards as per the selected order
+            if (options.order != null) {
+                if (options.order.equals("random")) {
+                    Collections.shuffle(cards);
+                } else if (options.order.equals("recent-mistakes-first")) {
+                    CardOrganizer organizer = new RecentMistakesFirstOrganizer();
+                    cards = organizer.organize(cards, stats);
+                } else if (options.order.equals("worst-first")) {
+                    CardOrganizer organizer = new WorstFirstOrganizer();
+                    cards = organizer.organize(cards, stats);
+                }
+            }
 
-            String question = options.invertCards ? card.getAnswer() : card.getQuestion();
-            String answer = options.invertCards ? card.getQuestion() : card.getAnswer();
+            List<Flashcard> remaining = new ArrayList<>(cards);
+            int cardIndex = 0;
+            boolean allCorrect = true; // Track if all cards are answered correctly
 
-            System.out.println("Q: " + question);
-            System.out.print("> ");
-            String userInput = scanner.nextLine().trim();
+            while (!remaining.isEmpty()) {
+                Flashcard card = remaining.get(cardIndex % remaining.size());
 
-            CardStats stat = stats.get(card);
-            stat.timesAsked++;
+                String question = options.invertCards ? card.getAnswer() : card.getQuestion();
+                String answer = options.invertCards ? card.getQuestion() : card.getAnswer();
 
-            if (userInput.equalsIgnoreCase(answer)) {
-                stat.timesCorrect++;
-                System.out.println("✅ Correct! (" + stat.timesCorrect + "/" + options.repetitions + ")");
-                if (stat.timesCorrect >= options.repetitions) {
-                    System.out.println("🎯 Done with this card.\n");
-                    remaining.remove(card);
-                    cardIndex = 0;
-                    continue;
+                System.out.println("Q: " + question);
+                System.out.print("> ");
+                String userInput = scanner.nextLine().trim();
+
+                CardStats stat = stats.get(card);
+                stat.timesAsked++;
+
+                if (userInput.equalsIgnoreCase(answer)) {
+                    stat.timesCorrect++;
+                    System.out.println("✅ Correct! (" + stat.timesCorrect + "/" + options.repetitions + ")");
+                    if (stat.timesCorrect >= options.repetitions) {
+                        System.out.println("🎯 Done with this card.\n");
+                        remaining.remove(card);
+                        cardIndex = 0; // reset card index for next round
+                        continue;
+                    }
+                } else {
+                    allCorrect = false; // Mark as false if any answer is incorrect
+                    System.out.println("❌ Incorrect. Try again.\n");
+                }
+
+                cardIndex++;
+            }
+
+            // After completing a round of flashcards
+            System.out.println("🎉 All flashcards completed! ✅");
+
+            // Achievement Unlock Check
+            if (allCorrect) {
+                System.out.println("🎉 Achievement Unlocked: All cards correct in one round!");
+            }
+
+            // Ask the user if they want to review with a different order
+            System.out.print("Do you want to review again with a different order? (yes/no): ");
+            String reviewChoice = scanner.nextLine().trim().toLowerCase();
+
+            if ("yes".equals(reviewChoice)) {
+                // Ensure user inputs a valid order
+                boolean validOrder = false;
+                while (!validOrder) {
+                    System.out.print("Enter new order (random / worst-first / recent-mistakes-first): ");
+                    String newOrder = scanner.nextLine().trim();
+                    if (newOrder.matches("random|recent-mistakes-first|worst-first")) {
+                        options.order = newOrder;
+                        validOrder = true; // Break out of the loop if order is valid
+                    } else {
+                        System.out.println("Invalid order. Please choose from random, worst-first, or recent-mistakes-first.");
+                    }
                 }
             } else {
-                System.out.println("❌ Incorrect. Try again.\n");
+                reviewAgain = false; // End review loop
             }
-
-            cardIndex++;
         }
 
         scanner.close();
-        System.out.println("🎉 All flashcards completed! ✅");
-        AchievementTracker.printAchievements(stats);
-        System.exit(0);
+        System.out.println("Thank you for using the Flashcard app!");
     }
 
     public static void printHelp() {
         System.out.println("Usage: flashcard <cards-file> [options]");
-            System.out.println("Options:");
-            System.out.println("  --help                      Tuslamjiin medeelel haruulah ");
-            System.out.println("  --order <order>             Zohion baiguulaltiin turul, default  \"random\" ");
-            System.out.println("  --repetitions <num>         Heden udaa zuw hariulah shaardlagatai we.");
-            System.out.println("  --invertCards               asuult hariultiin solij haruulna.");
+        System.out.println("Options:");
+        System.out.println("  --help                      Show help");
+        System.out.println("  --order <order>             Choose order for flashcards (default: random)");
+        System.out.println("  --repetitions <num>         Number of correct answers needed per card");
+        System.out.println("  --invertCards               Show answers as questions");
     }
 
     public static List<Flashcard> loadFlashcards(String filename) {
